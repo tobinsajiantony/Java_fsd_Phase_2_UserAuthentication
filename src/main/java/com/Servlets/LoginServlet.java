@@ -1,7 +1,6 @@
 package com.Servlets;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -11,21 +10,21 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 
-import com.Entity.EProduct;
 import com.Entity.EUser;
 import com.Entity.HibernateUtil;
 
 /**
- * Servlet implementation class EProductServlet
+ * Servlet implementation class LoginServlet
  */
-public class EProductServlet extends HttpServlet {
+public class LoginServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
 	/**
 	 * @see HttpServlet#HttpServlet()
 	 */
-	public EProductServlet() {
+	public LoginServlet() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
@@ -44,34 +43,38 @@ public class EProductServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		try {
-			if(request.getParameter("pname")!="" && request.getParameter("pprice")!="") {
-				String ProductName = request.getParameter("pname");
-				int ProductPrice = Integer.parseInt(request.getParameter("pprice"));
-				EProduct eProduct = new EProduct(ProductName, ProductPrice, new Date());
+			if(request.getParameter("uname")!="" && request.getParameter("password")!="") {
+				String userName = request.getParameter("uname");
+				String password = request.getParameter("password");
 				SessionFactory factory = HibernateUtil.getSessionFactory();
 
 				Session session = factory.openSession();
 				// using HQL
-				session.save(eProduct);
-				response.getWriter().append("Product Entered Successfully");
-				session.close();
+				String hql = "from EUser where UserName = :user_Name";
+				Query query = session.createQuery(hql);
+				query.setParameter("user_Name", userName);
+				EUser user = (EUser) query.list().stream().findFirst().orElse(null);
+				if(user != null) {
+					if(user.getPassword().equals(password)) {
+						//response.sendRedirect("LandingPage.jsp");
+						request.getRequestDispatcher("LandingPage.jsp").forward(request, response);
+					}
+					else {
+						response.getWriter().append("Password is incorrect");
+					}
+				}
+				else {
+					response.getWriter().append("Invalid User Name");
+				}
 			}
-			else if(request.getParameter("pname")=="" && request.getParameter("pprice")!="") {
-				response.getWriter().append("Please Enter Product Name");
+			else if(request.getParameter("uname")=="") {
+				response.getWriter().append("Enter User Name");
 			}
-			else if(request.getParameter("pname")!="" && request.getParameter("pprice")=="") {
-				response.getWriter().append("Please Enter Product Price");
+			else if(request.getParameter("password")=="") {
+				response.getWriter().append("Enter Password");
 			}
-			else
-			{
-				response.getWriter().append("Please Enter Product Name and Product Price");
-			}
-		} catch(NumberFormatException nfe)
-		{
-			response.getWriter().append("Enter Valid Input");
-		}
-		catch(Exception ex) {
-			response.getWriter().append(ex.getLocalizedMessage());
+		}catch(Exception ex) {
+
 		}
 	}
 
