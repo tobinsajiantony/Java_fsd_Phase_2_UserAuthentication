@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 
 import com.Entity.EUser;
 import com.Entity.HibernateUtil;
@@ -51,8 +52,17 @@ public class RegistrationServlet extends HttpServlet {
 
 					Session session = factory.openSession();
 					// using HQL
+					String hql = "from EUser where UserName = :user_Name";
+					Query query = session.createQuery(hql);
+					query.setParameter("user_Name", UserName);
+					EUser user = (EUser) query.list().stream().findFirst().orElse(null);
+					if(user == null) {
 					session.save(eUser);
-					response.getWriter().append("User Added Successfully");
+					request.getRequestDispatcher("AccountCreated.jsp").forward(request, response);
+					}
+					else {
+						response.getWriter().append("An account with the same username already exists!");
+					}
 					session.close();
 				}
 				else {
